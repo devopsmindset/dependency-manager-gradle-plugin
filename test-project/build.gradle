@@ -1,0 +1,65 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+repositories {
+    maven {
+        url "http://repository.kiosk.roche.com/maven"
+    }
+    mavenLocal()
+    ivy {
+        url "http://repository.kiosk.roche.com/"
+        content{
+            includeGroup "npm"
+            includeGroup "roche"
+        }
+        patternLayout {
+            artifact 'npm/@[organisation]/[module]/-/@[organization]/[module]-[revision].[ext]'
+            artifact 'npm/[module]/-/[module]-[revision].[ext]'
+        }
+        metadataSources {
+            artifact()
+        }
+    }
+}
+
+buildscript {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        repositories {
+            mavenLocal()
+            dependencies {
+                classpath 'org.devopsmindset.gradle:dependency-manager:1.0.0-SNAPSHOT'
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            url "http://repository.kiosk.roche.com/gradle"
+        }
+    }
+
+}
+
+configurations {
+    patchDependencies
+    frontendpackages
+}
+
+dependencies{
+    patchDependencies group: 'com.roche.modules.eppr', name: 'eppr-runtime', version: '2.0.0-SNAPSHOT', classifier: 'installer', ext: 'exe', because: "mcdonalds"
+    patchDependencies group: 'com.roche.modules.qc', name: 'qc-core-runtime', version: '3.0.0.1-SNAPSHOT', classifier: 'installer', ext: 'exe'
+    patchDependencies group: 'com.roche.modules', name: 'igen', version: '2.0.0-SNAPSHOT', classifier: 'installer', ext: 'exe'
+    patchDependencies group: 'com.roche.modules.reports', name: 'infinity-reports-server-web', version: '1.0.0.0-ALPHA02', classifier: 'installer', ext: 'exe'
+    // Missing patchDependencies 'com.roche.modules.commserver' ....
+
+    patchDependencies group: 'com.roche.infinity', name: 'infinity-configurator', version: '2.0.0-ALPHA24', ext: 'zip'
+    frontendpackages group: 'npm', name: 'infinity-ui-serviceability-hosts-wizard', version: '2.0.13', ext: 'tgz', because: "mcdonalds"
+}
+
+apply plugin: 'org.devopsmindset.dependency-manager'
+
+dependenciesManagement {
+    configurations = [['patchDependencies'], ['frontendpackages']]
+    separateByGroupId = [true, true]
+    stripVersion = [true, true]
+    decompress = [true, true]
+}

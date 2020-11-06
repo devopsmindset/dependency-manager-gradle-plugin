@@ -1,0 +1,67 @@
+plugins {
+    id 'java-gradle-plugin'
+    id "com.gradle.plugin-publish" version "0.12.0"
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
+
+}
+
+apply plugin: 'maven-publish'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    shadow localGroovy()
+    shadow gradleApi()
+
+    implementation 'org.rauschig:jarchivelib:0.7.1'
+    shadow group: 'org.apache.commons', name: 'commons-compress', version: '1.20'
+    shadow group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.5.0'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.5.2'
+    testCompile 'org.junit.jupiter:junit-jupiter:5.6.0'
+    compileOnly 'org.projectlombok:lombok:1.18.4'
+    annotationProcessor 'org.projectlombok:lombok:1.18.4'
+}
+
+
+gradlePlugin {
+    plugins {
+        dependencyManager {
+            id = 'org.devopsmindset.dependency-manager'
+            implementationClass = 'org.devopsmindset.gradle.DependencyManagerPlugin'
+            displayName = 'Dependency Manager'
+            description = 'Downloads a set of dependencies depending of a given configuration'
+        }
+    }
+}
+
+publishPlugins.dependsOn 'shadowJar'
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            from project.shadow.component(publication)
+            artifactId = 'dependency-manager'
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        outputs.upToDateWhen {false}
+        showStandardStreams = true
+    }
+}
+
+pluginBundle {
+    website = 'https://wwww.devopsmindset.org'
+    vcsUrl = 'https://github.com/devopsmindset/dependency-manager-gradle-plugin.git'
+    tags = ['dependency', 'dependencies']
+    plugins {
+        dependencyManager {
+            displayName = 'Dependency manager plugin'
+        }
+    }
+}
