@@ -24,8 +24,8 @@ public class DependencyManager extends DefaultTask {
     @TaskAction
     public void run() throws Exception {
         try {
-            Boolean stripVersion;
-            Boolean decompress;
+            Boolean stripVersion = true;
+            Boolean decompress = true;
 
             DependencyManagerExtension dpExtension = (DependencyManagerExtension) getProject().getConvention().getByName("dependenciesManagement");
             List<DownloadedDependency> downloadedDependencies = new ArrayList<DownloadedDependency>();
@@ -35,8 +35,10 @@ public class DependencyManager extends DefaultTask {
             FileUtils.deleteDirectory(Paths.get(getProject().getBuildDir().toString(),DEFAULT_LOCATION).toFile());
 
             for (String[] configurationArray : dpExtension.getConfigurations()) {
-                stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
-                decompress = ((decompress = dpExtension.getDecompress()[iteration]) != null) ? decompress : true;
+                if (dpExtension.getStripVersion() != null)
+                    stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
+                if (dpExtension.getDecompress() != null)
+                    decompress = ((decompress = dpExtension.getDecompress()[iteration]) != null) ? decompress : true;
 
                 for (String configuration : configurationArray) {
                     Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);

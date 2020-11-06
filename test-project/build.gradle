@@ -42,6 +42,7 @@ buildscript {
 configurations {
     patchDependencies
     frontendpackages
+    base
 }
 
 dependencies{
@@ -52,12 +53,11 @@ dependencies{
     // Missing patchDependencies 'com.roche.modules.commserver' ....
     patchDependencies group: 'com.roche.infinity', name: 'infinity-configurator', version: '2.0.0-ALPHA24', ext: 'zip'
     frontendpackages group: 'npm', name: 'infinity-ui-serviceability-hosts-wizard', version: '2.0.13', ext: 'tgz', because: "mcdonalds"
+    base group:'org.devopsmindset.gradle', name: 'dependency-manager', version: '0.0.1', ext: 'json', classifier: 'dependencies'
 }
 
 apply plugin: 'org.devopsmindset.dependency-manager'
 
 dependenciesManagement {
-    configurations = [['patchDependencies'], ['frontendpackages']]
-    stripVersion = [true, true]
-    decompress = [true, true]
+    configurations = [['patchDependencies','frontendpackages']]
 }

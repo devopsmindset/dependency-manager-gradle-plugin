@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class DependencyManagerExtension {
     private String[][] configurations;
-    private boolean[] stripVersion;
-    private boolean[] decompress;
+    private Boolean[] stripVersion;
+    private Boolean[] decompress;
 }
