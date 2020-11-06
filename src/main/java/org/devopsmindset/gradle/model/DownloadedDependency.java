@@ -1,11 +1,14 @@
 package org.devopsmindset.gradle.model;
 
 import lombok.Data;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.ResolvedArtifact;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.List;
 
 @Data
 public class DownloadedDependency {
@@ -18,6 +21,9 @@ public class DownloadedDependency {
     private String configuration;
     private String reason;
     private boolean decompressed = false;
+
+    public DownloadedDependency() {
+    }
 
     public DownloadedDependency(ResolvedArtifact artifact) {
         setArtifact(artifact.getModuleVersion().getId().getName());
@@ -40,4 +46,23 @@ public class DownloadedDependency {
         setConfiguration(configuration);
         setLocation(Paths.get(downloadPath.toString(), artifact.getModuleVersion().getId().getModule().getGroup(), artifactDestination).toString());
     }
+
+    public boolean findIn(List<DownloadedDependency> baseDependencies) {
+        for (DownloadedDependency baseDependency : baseDependencies) {
+            if (this.compareTo(baseDependency) == 0){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int compareTo(DownloadedDependency downloadedDependency){
+        return Comparator.comparing(DownloadedDependency::getGroup)
+                .thenComparing(DownloadedDependency::getArtifact)
+                .thenComparing(DownloadedDependency::getVersion)
+                .thenComparing(DownloadedDependency::getExtension)
+                .thenComparing(DownloadedDependency::getClassifer, Comparator.nullsLast(Comparator.reverseOrder()))
+                .compare(this, downloadedDependency);
+    }
+
 }
