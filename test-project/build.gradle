@@ -28,7 +28,7 @@ buildscript {
         repositories {
             mavenLocal()
             dependencies {
-                classpath 'org.devopsmindset.gradle:dependency-manager:1.0.0-SNAPSHOT'
+                classpath 'org.devopsmindset.gradle:dependency-manager:0.0.2-SNAPSHOT'
             }
         }
     }
@@ -60,7 +60,6 @@ dependencies{
 
 apply plugin: 'org.devopsmindset.dependency-manager'
 
-dependenciesManagement {
-    configurations = [['frontendpackages']]
-}
 
+
+publishToMavenLocal.dependsOn("dependenciesDownload")

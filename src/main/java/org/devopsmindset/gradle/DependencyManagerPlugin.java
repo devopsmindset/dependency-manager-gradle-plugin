@@ -23,11 +23,14 @@ class DependencyManagerPlugin implements Plugin<Project> {
 
     public void apply(Project project) {
         project.getPluginManager().apply(MavenPublishPlugin.class);
+
         project.getConvention().add("dependenciesManagement", DependencyManagerExtension.class);
         project.getTasks().register("dependenciesDownload", DependencyManager.class,  w -> {
                     w.setGroup("dependency manager");
                 }
         );
+        project.getTasks().getByName("publishToMavenLocal").dependsOn("dependenciesDownload");
+        project.getTasks().getByName("publish").dependsOn("dependenciesDownload");
 
         project.getConfigurations().create("dependencyManager");
 

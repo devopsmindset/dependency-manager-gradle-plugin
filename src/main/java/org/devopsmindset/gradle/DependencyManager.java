@@ -43,34 +43,38 @@ public class DependencyManager extends DefaultTask {
             List<DownloadedDependency> baseDependencies = getBaseDependencies();
 
             int iteration = 0;
+            if (dpExtension.getConfigurations() != null) {
+                for (String[] configurationArray : dpExtension.getConfigurations()) {
+                    if (dpExtension.getStripVersion() != null)
+                        stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
+                    if (dpExtension.getDecompress() != null)
+                        decompress = ((decompress = dpExtension.getDecompress()[iteration]) != null) ? decompress : true;
 
-            for (String[] configurationArray : dpExtension.getConfigurations()) {
-                if (dpExtension.getStripVersion() != null)
-                    stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
-                if (dpExtension.getDecompress() != null)
-                    decompress = ((decompress = dpExtension.getDecompress()[iteration]) != null) ? decompress : true;
+                    for (String configuration : configurationArray) {
+                        Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);
+                        ResolvedConfiguration resolvedConfiguration = gradleConfiguration.getResolvedConfiguration();
 
-                for (String configuration : configurationArray) {
-                    Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);
-                    ResolvedConfiguration resolvedConfiguration = gradleConfiguration.getResolvedConfiguration();
-
-                    for (ResolvedArtifact artifact : resolvedConfiguration.getResolvedArtifacts()) {
-                        DownloadedDependency downloadedDependency = copyDependency(artifact,
-                                Paths.get(getProject().getBuildDir().toString(),DEFAULT_LOCATION, configuration),
-                                stripVersion,
-                                decompress,
-                                configuration,
-                                baseDependencies);
-                        if (downloadedDependency != null) {
-                            downloadedDependencies.add(downloadedDependency);
+                        for (ResolvedArtifact artifact : resolvedConfiguration.getResolvedArtifacts()) {
+                            DownloadedDependency downloadedDependency = copyDependency(artifact,
+                                    Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, configuration),
+                                    stripVersion,
+                                    decompress,
+                                    configuration,
+                                    baseDependencies);
+                            if (downloadedDependency != null) {
+                                downloadedDependencies.add(downloadedDependency);
+                            }
                         }
                     }
-                }
 
-                iteration++;
+                    iteration++;
+                }
+            }else{
+                getProject().getLogger().warn("No configuration found for plugin dependency-manager");
             }
 
             generateResolvedDependenciesFile(downloadedDependencies);
+
 
         }catch(Exception e){
             getProject().getLogger().error("Error downloading dependencies " + e.toString());
