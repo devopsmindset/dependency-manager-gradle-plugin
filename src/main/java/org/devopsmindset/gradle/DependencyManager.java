@@ -3,15 +3,16 @@ package org.devopsmindset.gradle;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.io.FileUtils;
 import org.devopsmindset.gradle.model.DependencyManagerExtension;
 import org.devopsmindset.gradle.compress.CompressionUtils;
 import org.devopsmindset.gradle.model.DownloadedDependency;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.*;
+import org.gradle.api.artifacts.dsl.ArtifactHandler;
+import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.internal.impldep.com.amazonaws.services.s3.model.JSONInput;
 
 import java.io.*;
 import java.nio.file.*;
@@ -21,8 +22,8 @@ import java.util.List;
 public class DependencyManager extends DefaultTask {
 
     final String DEFAULT_LOCATION = "dependency-manager";
-    final String DEFAULT_DEPENDENCY_FILE = "downloaded-dependencies.json";
-    final String DEFAULT_DEPENDENCY_BASE_FILE = "downloaded-dependencies-base.json";
+    public static final String DEFAULT_DEPENDENCY_FILE = "processed.dependencies";
+    final String DEFAULT_DEPENDENCY_BASE_FILE = "base.dependencies";
     final String BASE_CONFIGURATION = "base";
 
     @TaskAction
@@ -36,24 +37,10 @@ public class DependencyManager extends DefaultTask {
 
             // Delete output directory
             FileUtils.deleteDirectory(Paths.get(getProject().getBuildDir().toString(),DEFAULT_LOCATION).toFile());
-            List<DownloadedDependency> baseDependencies = null;
-
+            FileUtils.deleteQuietly(Paths.get(getProject().getBuildDir().toString(),DEFAULT_DEPENDENCY_FILE).toFile());
+            FileUtils.deleteQuietly(Paths.get(getProject().getBuildDir().toString(),DEFAULT_DEPENDENCY_BASE_FILE).toFile());
             // Check delta dependency
-            Configuration baseConfiguration = getProject().getConfigurations().getByName("base");
-            if (baseConfiguration != null){
-                ResolvedConfiguration resolvedBaseConfiguration = baseConfiguration.getResolvedConfiguration();
-                for (ResolvedArtifact artifact : resolvedBaseConfiguration.getResolvedArtifacts()) {
-                    if (artifact.getExtension().equals("json") && artifact.getExtension().equals("dependencies")){
-                        Path baseLocation = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_BASE_FILE);
-                        Files.createDirectories(baseLocation.getParent());
-                        Files.copy(artifact.getFile().toPath() , baseLocation , StandardCopyOption.REPLACE_EXISTING);
-                        ObjectMapper mapper = new ObjectMapper();
-                        String content = Files.readString(baseLocation);
-                        baseDependencies = mapper.readValue(Files.readString(baseLocation), new TypeReference<List<DownloadedDependency>>(){});
-                        break;
-                    }
-                }
-            }
+            List<DownloadedDependency> baseDependencies = getBaseDependencies();
 
             int iteration = 0;
 
@@ -91,6 +78,25 @@ public class DependencyManager extends DefaultTask {
         }
     }
 
+    private List<DownloadedDependency> getBaseDependencies() throws IOException {
+        List<DownloadedDependency> baseDependencies = null;
+        Configuration baseConfiguration = getProject().getConfigurations().getByName(BASE_CONFIGURATION);
+        if (baseConfiguration != null){
+            ResolvedConfiguration resolvedBaseConfiguration = baseConfiguration.getResolvedConfiguration();
+            for (ResolvedArtifact artifact : resolvedBaseConfiguration.getResolvedArtifacts()) {
+                if (artifact.getExtension().equals("dependencies")){
+                    Path baseLocation = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_BASE_FILE);
+                    Files.createDirectories(baseLocation.getParent());
+                    Files.copy(artifact.getFile().toPath() , baseLocation , StandardCopyOption.REPLACE_EXISTING);
+                    ObjectMapper mapper = new ObjectMapper();
+                    baseDependencies = mapper.readValue(Files.readString(baseLocation), new TypeReference<List<DownloadedDependency>>(){});
+                    break;
+                }
+            }
+        }
+        return baseDependencies;
+    }
+
     private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, boolean decompress, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
         getProject().getLogger().info("Dependency Manager - Downloading dependency " + artifact.getModuleVersion().toString());
 
@@ -98,11 +104,11 @@ public class DependencyManager extends DefaultTask {
         // Search for the reason in dependency list as it is not informed in resolved artifact
         downloadedDependency.setReason(getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies()).getReason());
 
-        if (downloadedDependency.findIn(baseDependencies)){
-            return null;
+        // If already in base dependency it will not be added / processed
+        if (!downloadedDependency.findIn(baseDependencies)){
+            downloadedDependency.setDifferentFromBase(true);
+            copyArtifact(artifact, decompress, Paths.get(downloadedDependency.getLocation()));
         }
-
-        copyArtifact(artifact, decompress, Paths.get(downloadedDependency.getLocation()));
 
         return downloadedDependency;
     }
@@ -144,7 +150,9 @@ public class DependencyManager extends DefaultTask {
     }
 
     private boolean isExtensionToDecompress(String extension){
-        return (extension.toLowerCase().equals("zip") || extension.toLowerCase().equals("tgz") || extension.toLowerCase().equals("tar.gz"));
+        return (extension.toLowerCase().equals("zip")
+                || extension.toLowerCase().equals("tgz")
+                || extension.toLowerCase().equals("tar.gz"));
     }
 
 

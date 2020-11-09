@@ -21,6 +21,7 @@ public class DownloadedDependency {
     private String configuration;
     private String reason;
     private boolean decompressed = false;
+    private boolean differentFromBase = false;
 
     public DownloadedDependency() {
     }
@@ -48,9 +49,11 @@ public class DownloadedDependency {
     }
 
     public boolean findIn(List<DownloadedDependency> baseDependencies) {
-        for (DownloadedDependency baseDependency : baseDependencies) {
-            if (this.compareTo(baseDependency) == 0){
-                return true;
+        if (baseDependencies != null) {
+            for (DownloadedDependency baseDependency : baseDependencies) {
+                if (this.compareTo(baseDependency) == 0) {
+                    return true;
+                }
             }
         }
         return false;
