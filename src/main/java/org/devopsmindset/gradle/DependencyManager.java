@@ -4,20 +4,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import org.devopsmindset.gradle.model.DependencyManagerExtension;
 import org.devopsmindset.gradle.compress.CompressionUtils;
+import org.devopsmindset.gradle.model.DependencyManagerExtension;
 import org.devopsmindset.gradle.model.DownloadedDependency;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.*;
-import org.gradle.api.artifacts.dsl.ArtifactHandler;
-import org.gradle.api.publish.PublishingExtension;
-import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.TaskAction;
 
-import java.io.*;
-import java.nio.file.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 public class DependencyManager extends DefaultTask {
 
@@ -102,11 +105,13 @@ public class DependencyManager extends DefaultTask {
     }
 
     private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, boolean decompress, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
-        getProject().getLogger().info("Dependency Manager - Downloading dependency " + artifact.getModuleVersion().toString());
+        getProject().getLogger().info("Dependency Manager - Downloading dependency:  {}", artifact.getModuleVersion().toString());
 
         DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, decompress, isExtensionToDecompress(artifact.getExtension()), configuration, downloadPath);
         // Search for the reason in dependency list as it is not informed in resolved artifact
-        downloadedDependency.setReason(getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies()).getReason());
+        final Dependency reason = getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies());
+        requireNonNull(reason, "Required dependency is null");
+        downloadedDependency.setReason(reason.getReason());
 
         // If already in base dependency it will not be added / processed
         if (!downloadedDependency.findIn(baseDependencies)){
@@ -117,12 +122,12 @@ public class DependencyManager extends DefaultTask {
         return downloadedDependency;
     }
 
-    private void copyArtifact(ResolvedArtifact artifact, boolean decompress, Path dest) throws IOException, Exception{
+    private void copyArtifact(ResolvedArtifact artifact, boolean decompress, Path dest) throws Exception{
         if (decompress && isExtensionToDecompress(artifact.getExtension())){
-            if (artifact.getExtension().toLowerCase().equals("zip")){
+            if (artifact.getExtension().equalsIgnoreCase("zip")){
                 CompressionUtils.unZipFile(artifact.getFile(), dest.toFile());
             }else{
-                if (artifact.getExtension().toLowerCase().equals("tar.gz") || artifact.getExtension().toLowerCase().equals("tgz")){
+                if (artifact.getExtension().equalsIgnoreCase("tar.gz") || artifact.getExtension().equalsIgnoreCase("tgz")){
                     CompressionUtils.unTarFile(artifact.getFile(), dest.toFile());
                 }
             }
@@ -149,14 +154,14 @@ public class DependencyManager extends DefaultTask {
         mapper.writerWithDefaultPrettyPrinter();
         mapper.findAndRegisterModules();
         File downloadedDependenciesFile = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_FILE).toFile();
-        downloadedDependenciesFile.delete();
+        Files.delete(downloadedDependenciesFile.toPath());
         mapper.writerWithDefaultPrettyPrinter().writeValue(downloadedDependenciesFile, downloadedDependencies);
     }
 
     private boolean isExtensionToDecompress(String extension){
-        return (extension.toLowerCase().equals("zip")
-                || extension.toLowerCase().equals("tgz")
-                || extension.toLowerCase().equals("tar.gz"));
+        return (extension.equalsIgnoreCase("zip")
+                || extension.equalsIgnoreCase("tgz")
+                || extension.equalsIgnoreCase("tar.gz"));
     }
 
 
