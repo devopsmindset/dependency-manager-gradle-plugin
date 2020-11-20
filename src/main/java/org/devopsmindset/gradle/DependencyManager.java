@@ -142,14 +142,20 @@ public class DependencyManager extends DefaultTask {
         return foundDependency;
     }
 
-    private void generateResolvedDependenciesFile(List<DownloadedDependency> downloadedDependencies) throws IOException {
+    private void generateResolvedDependenciesFile(List<DownloadedDependency> downloadedDependencies) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.writerWithDefaultPrettyPrinter();
         mapper.findAndRegisterModules();
         File downloadedDependenciesFile = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_FILE).toFile();
-        Files.delete(downloadedDependenciesFile.toPath());
-        mapper.writerWithDefaultPrettyPrinter().writeValue(downloadedDependenciesFile, downloadedDependencies);
+        try {
+            if (Files.exists(downloadedDependenciesFile.toPath())) {
+                Files.delete(downloadedDependenciesFile.toPath());
+            }
+            mapper.writerWithDefaultPrettyPrinter().writeValue(downloadedDependenciesFile, downloadedDependencies);
+        } catch (IOException e) {
+            getProject().getLogger().error(e.getMessage(), e);
+        }
     }
 
     private boolean isExtensionToDecompress(String extension) {

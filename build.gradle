@@ -23,6 +23,7 @@ dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter:5.6.0'
     compileOnly 'org.projectlombok:lombok:1.18.4'
     annotationProcessor 'org.projectlombok:lombok:1.18.4'
+    implementation("com.google.guava:guava:30.0-jre")
 }
 
 
