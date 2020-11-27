@@ -101,10 +101,13 @@ public class DependencyManager extends DefaultTask {
 
         DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, decompress, isExtensionToDecompress(artifact.getExtension()), configuration, downloadPath);
         // Search for the reason in dependency list as it is not informed in resolved artifact
-        final Dependency reason = getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies());
+        final Dependency dependencyFromArtifact = getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies());
 
-        if (reason != null) {
-            downloadedDependency.setReason(reason.getReason());
+        if (dependencyFromArtifact != null) {
+            downloadedDependency.setReason(dependencyFromArtifact.getReason());
+            if (downloadedDependency.getReason() != null && downloadedDependency.getReason().startsWith("target:")){
+                downloadedDependency.setLocation(Paths.get(getProject().getBuildDir().toString(), downloadedDependency.getReason().replaceAll("target:", ""), downloadedDependency.getProcessedArtifactName()).toString());
+            }
         }
 
         // If already in base dependency it will not be added / processed

@@ -22,6 +22,7 @@ public class DownloadedDependency {
     private String reason;
     private boolean decompressed = false;
     private boolean differentFromBase = false;
+    private String processedArtifactName;
 
     public DownloadedDependency() {
     }
@@ -36,16 +37,17 @@ public class DownloadedDependency {
 
     public DownloadedDependency(ResolvedArtifact artifact, boolean stripVersion, boolean decompress, boolean extensionToDecompress, String configuration, Path downloadPath) {
         this(artifact);
-        String artifactDestination =  artifact.getFile().getName();
+        processedArtifactName =  artifact.getFile().getName();
         // Strip version from destination
         if (stripVersion) {
-            artifactDestination = artifactDestination.replaceAll("-" + artifact.getModuleVersion().getId().getVersion(), "");
+            processedArtifactName = processedArtifactName.replaceAll("-" + artifact.getModuleVersion().getId().getVersion(), "");
         }
         if (decompress && extensionToDecompress){
             setDecompressed(true);
         }
+
         setConfiguration(configuration);
-        setLocation(Paths.get(downloadPath.toString(), artifact.getModuleVersion().getId().getModule().getGroup(), artifactDestination).toString());
+        setLocation(Paths.get(downloadPath.toString(), artifact.getModuleVersion().getId().getModule().getGroup(), processedArtifactName).toString());
     }
 
     public boolean findIn(List<DownloadedDependency> baseDependencies) {
