@@ -58,7 +58,7 @@ dependencies{
     cspDepenency group: 'npm', name: 'infinity-ui-serviceability-tunetable', version: '1.2.+', ext: 'tgz', because: "target=csp/serviceability-tunetable"
     cspDepenency group: 'npm', name: 'infinity-ui-ruleengine-authoring', version: '1.0.+', ext: 'tgz', because: "target=csp/ruleengine/unzip;decompress=."
     cspDepenency group: 'roche', name: 'components-library-ui', version: '1.1.+', ext: 'tgz', because: "target=csp/components/unzipPackage;decompress=package"
-
+    cspDepenency group: 'com.roche.sis.infinity', name: 'infinity-lis-gen-reports', version: '0.0.13', ext: 'zip', because: "decompress=.;target=csp/acb/LISPages"
     //base group:'org.devopsmindset.gradle', name: 'dependency-manager', version: '0.0.1', ext: 'dependencies'
 }
 
@@ -68,7 +68,5 @@ dependenciesManagement {
     configurations = [['cspDepenency']]
     stripVersion = [true, true]
 }
-
-
 
 publishToMavenLocal.dependsOn("dependenciesDownload")
