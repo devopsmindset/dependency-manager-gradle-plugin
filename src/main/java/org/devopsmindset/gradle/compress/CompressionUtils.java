@@ -1,36 +1,25 @@
 package org.devopsmindset.gradle.compress;
 
+import net.lingala.zip4j.ZipFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.compress.utils.IOUtils;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class CompressionUtils {
 
-    public static void unZipFile(File fileZip, File destDir) throws IOException {
-        destDir.mkdirs();
+    public static void unzipFolderZip4j(Path source, Path target) throws IOException {
 
-        byte[] buffer = new byte[1024];
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(fileZip.toString()));
-        ZipEntry zipEntry = zis.getNextEntry();
-        while (zipEntry != null) {
-            File newFile = newFile(destDir, zipEntry);
-            FileOutputStream fos = new FileOutputStream(newFile);
-            int len;
-            while ((len = zis.read(buffer)) > 0) {
-                fos.write(buffer, 0, len);
-            }
-            fos.close();
-            zipEntry = zis.getNextEntry();
-        }
-        zis.closeEntry();
-        zis.close();
+        new ZipFile(source.toFile())
+                .extractAll(target.toString());
+
     }
+
 
     public static File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
         File destFile = new File(destinationDir, zipEntry.getName());
@@ -83,7 +72,7 @@ public class CompressionUtils {
 
     public static void extract(File origin, File destination) throws Exception{
         if (FileNameUtils.getExtension(origin.toString()).equalsIgnoreCase("zip")){
-            CompressionUtils.unZipFile(origin, destination);
+            CompressionUtils.unzipFolderZip4j(origin.toPath(), destination.toPath());
         }else{
             if (FileNameUtils.getExtension(origin.toString()).equalsIgnoreCase("tar.gz") || FileNameUtils.getExtension(origin.toString()).equalsIgnoreCase("tgz")) {
                 CompressionUtils.unTarFile(origin, destination);
