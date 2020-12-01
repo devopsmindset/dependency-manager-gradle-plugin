@@ -121,13 +121,13 @@ public class DependencyManager extends DefaultTask {
 
     private void copyArtifact(ResolvedArtifact artifact, Path dest, Map<String, String> reasons) throws Exception {
         if (isExtensionToDecompress(artifact.getExtension()) && reasons.containsKey("decompress")) {
+            Files.createDirectories(dest);
             if (!reasons.get("decompress").equals(".")){
                 Path tempDirWithPrefix = Files.createTempDirectory("depmanager");
                 try {
                     CompressionUtils.extract(artifact.getFile(), tempDirWithPrefix.toFile());
 
                     File origin = new File(Paths.get(tempDirWithPrefix.toString(), reasons.get("decompress")).toString());
-                    Files.createDirectories(dest);
                     Path destination = dest;
                     if (origin.isFile()) {
                         destination = Paths.get(dest.toString(), origin.getName());
