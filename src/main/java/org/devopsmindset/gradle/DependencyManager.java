@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DependencyManager extends DefaultTask {
 
@@ -32,7 +33,6 @@ public class DependencyManager extends DefaultTask {
     public void run() throws Exception {
         try {
             Boolean stripVersion = true;
-            Boolean decompress = true;
 
             DependencyManagerExtension dpExtension = (DependencyManagerExtension) getProject().getConvention().getByName("dependenciesManagement");
             List<DownloadedDependency> downloadedDependencies = new ArrayList<DownloadedDependency>();
@@ -49,8 +49,6 @@ public class DependencyManager extends DefaultTask {
             for (String[] configurationArray : dpExtension.getConfigurations()) {
                 if (dpExtension.getStripVersion() != null)
                     stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
-                if (dpExtension.getDecompress() != null)
-                    decompress = ((decompress = dpExtension.getDecompress()[iteration]) != null) ? decompress : true;
 
                 for (String configuration : configurationArray) {
                     Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);
@@ -60,7 +58,6 @@ public class DependencyManager extends DefaultTask {
                         DownloadedDependency downloadedDependency = copyDependency(artifact,
                                 Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, configuration),
                                 stripVersion,
-                                decompress,
                                 configuration,
                                 baseDependencies);
                         downloadedDependencies.add(downloadedDependency);
@@ -96,43 +93,60 @@ public class DependencyManager extends DefaultTask {
         return baseDependencies;
     }
 
-    private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, boolean decompress, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
+    private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
         getProject().getLogger().info("Dependency Manager - Downloading dependency:  {}", artifact.getModuleVersion().toString());
 
-        DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, decompress, isExtensionToDecompress(artifact.getExtension()), configuration, downloadPath);
+        DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, isExtensionToDecompress(artifact.getExtension()), configuration, downloadPath);
         // Search for the reason in dependency list as it is not informed in resolved artifact
         final Dependency dependencyFromArtifact = getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies());
 
         if (dependencyFromArtifact != null) {
             downloadedDependency.setReason(dependencyFromArtifact.getReason());
-            if (downloadedDependency.getReason() != null && downloadedDependency.getReason().startsWith("target:")){
-                downloadedDependency.setLocation(Paths.get(getProject().getBuildDir().toString(), downloadedDependency.getReason().replaceAll("target:", ""), downloadedDependency.getProcessedArtifactName()).toString());
+            if (downloadedDependency.getReasons().containsKey("target")){
+                downloadedDependency.setLocation(Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, "target", downloadedDependency.getReasons().get("target"), downloadedDependency.getProcessedArtifactName()).toString());
+                if (downloadedDependency.getReasons().containsKey("decompress")){
+                    downloadedDependency.setLocation(Paths.get(downloadedDependency.getLocation()).getParent().toString());
+                }
             }
         }
 
         // If already in base dependency it will not be added / processed
         if (!downloadedDependency.findIn(baseDependencies)) {
             downloadedDependency.setDifferentFromBase(true);
-            copyArtifact(artifact, decompress, Paths.get(downloadedDependency.getLocation()));
+            copyArtifact(artifact, Paths.get(downloadedDependency.getLocation()), downloadedDependency.getReasons());
         }
 
         return downloadedDependency;
     }
 
-    private void copyArtifact(ResolvedArtifact artifact, boolean decompress, Path dest) throws Exception {
-        if (decompress && isExtensionToDecompress(artifact.getExtension())) {
-            if (artifact.getExtension().equalsIgnoreCase("zip")) {
-                CompressionUtils.unZipFile(artifact.getFile(), dest.toFile());
-            } else {
-                if (artifact.getExtension().equalsIgnoreCase("tar.gz") || artifact.getExtension().equalsIgnoreCase("tgz")) {
-                    CompressionUtils.unTarFile(artifact.getFile(), dest.toFile());
+    private void copyArtifact(ResolvedArtifact artifact, Path dest, Map<String, String> reasons) throws Exception {
+        if (isExtensionToDecompress(artifact.getExtension()) && reasons.containsKey("decompress")) {
+            if (!reasons.get("decompress").equals(".")){
+                Path tempDirWithPrefix = Files.createTempDirectory("depmanager");
+                try {
+                    CompressionUtils.extract(artifact.getFile(), tempDirWithPrefix.toFile());
+
+                    File origin = new File(Paths.get(tempDirWithPrefix.toString(), reasons.get("decompress")).toString());
+                    Files.createDirectories(dest);
+                    Path destination = dest;
+                    if (origin.isFile()) {
+                        destination = Paths.get(dest.toString(), origin.getName());
+                        Files.copy(origin.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        FileUtils.copyDirectory(origin, destination.toFile());
+                    }
+                }finally{
+                    FileUtils.deleteQuietly(tempDirWithPrefix.toFile());
                 }
+            }else{
+                CompressionUtils.extract(artifact.getFile(), dest.toFile());
             }
         } else {
             Files.createDirectories(dest.getParent());
             Files.copy(artifact.getFile().toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
         }
     }
+
 
     private Dependency getDependencyFromArtifact(ResolvedArtifact artifact, DependencySet dependencies) {
         Dependency foundDependency = null;

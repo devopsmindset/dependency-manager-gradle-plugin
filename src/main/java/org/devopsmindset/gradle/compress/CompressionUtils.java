@@ -2,6 +2,7 @@ package org.devopsmindset.gradle.compress;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.compress.utils.IOUtils;
 
 import java.io.*;
@@ -76,6 +77,16 @@ public class CompressionUtils {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    public static void extract(File origin, File destination) throws Exception{
+        if (FileNameUtils.getExtension(origin.toString()).equalsIgnoreCase("zip")){
+            CompressionUtils.unZipFile(origin, destination);
+        }else{
+            if (FileNameUtils.getExtension(origin.toString()).equalsIgnoreCase("tar.gz") || FileNameUtils.getExtension(origin.toString()).equalsIgnoreCase("tgz")) {
+                CompressionUtils.unTarFile(origin, destination);
             }
         }
     }

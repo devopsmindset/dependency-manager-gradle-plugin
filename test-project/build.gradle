@@ -28,7 +28,7 @@ buildscript {
         repositories {
             mavenLocal()
             dependencies {
-                classpath 'org.devopsmindset.gradle:dependency-manager:0.0.2-SNAPSHOT'
+                classpath "org.devopsmindset.gradle:dependency-manager:0.0.5-SNAPSHOT"
             }
         }
     }
@@ -42,28 +42,33 @@ buildscript {
 }
 
 configurations {
-    patchDependencies
-    frontendpackages
+    cspDepenency
     base
 }
 
 dependencies{
-    patchDependencies group: 'com.roche.modules.eppr', name: 'eppr-runtime', version: '2.0.0-SNAPSHOT', classifier: 'installer', ext: 'exe', because: "target:csp/acb/"
-    patchDependencies group: 'com.roche.modules.qc', name: 'qc-core-runtime', version: '3.0.0.1-SNAPSHOT', classifier: 'installer', ext: 'exe'
-    patchDependencies group: 'com.roche.modules', name: 'igen', version: '2.0.0-SNAPSHOT', classifier: 'installer', ext: 'exe'
-    patchDependencies group: 'com.roche.modules.reports', name: 'infinity-reports-server-web', version: '1.0.0.0-ALPHA02', classifier: 'installer', ext: 'exe'
+    //patchDependencies group: 'com.roche.modules.eppr', name: 'eppr-runtime', version: '2.0.0-SNAPSHOT', classifier: 'installer', ext: 'exe'
+    //patchDependencies group: 'com.roche.modules.qc', name: 'qc-core-runtime', version: '3.0.0.1-SNAPSHOT', classifier: 'installer', ext: 'exe'
+    cspDepenency group: 'com.roche.modules', name: 'igen', version: '2.0.0-SNAPSHOT', classifier: 'installer', ext: 'exe', because: "target=."
+    //patchDependencies group: 'com.roche.modules.reports', name: 'infinity-reports-server-web', version: '1.0.0.0-ALPHA02', classifier: 'installer', ext: 'exe', because: "target=csp"
     // Missing patchDependencies 'com.roche.modules.commserver' ....
-    patchDependencies group: 'com.roche.infinity', name: 'infinity-configurator', version: '2.0.0-ALPHA24', ext: 'zip'
-    frontendpackages group: 'npm', name: 'infinity-ui-serviceability-hosts-wizard', version: '2.0.14', ext: 'tgz', because: "mcdonalds"
+    cspDepenency group: 'com.roche.infinity', name: 'infinity-configurator', version: '2.0.0-ALPHA24', ext: 'zip', because: "decompress=.;target=toparse"
+    cspDepenency group: 'npm', name: 'infinity-ui-workarea-charts', version: '0.0.+', ext: 'tgz', because: "asdf"
+    cspDepenency group: 'npm', name: 'infinity-ui-serviceability-hosts-wizard', version: '2.0.+', ext: 'tgz', because: "decompress=."
+    cspDepenency group: 'npm', name: 'infinity-ui-serviceability-tunetable', version: '1.2.+', ext: 'tgz', because: "target=csp/serviceability-tunetable"
+    cspDepenency group: 'npm', name: 'infinity-ui-ruleengine-authoring', version: '1.0.+', ext: 'tgz', because: "target=csp/ruleengine/unzip;decompress=."
+    cspDepenency group: 'roche', name: 'components-library-ui', version: '1.1.+', ext: 'tgz', because: "target=csp/components/unzipPackage;decompress=package"
+
     //base group:'org.devopsmindset.gradle', name: 'dependency-manager', version: '0.0.1', ext: 'dependencies'
 }
 
 apply plugin: 'org.devopsmindset.dependency-manager'
 
 dependenciesManagement {
-    configurations = [['patchDependencies'], ['frontendpackages']]
-    stripVersion = [true, false]
-    decompress = [false, true]
+    configurations = [['cspDepenency']]
+    stripVersion = [true, true]
 }
+
+
 
 publishToMavenLocal.dependsOn("dependenciesDownload")
