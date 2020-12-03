@@ -48,7 +48,8 @@ public class DependencyManager extends DefaultTask {
             Preconditions.checkNotNull(dpExtension.getConfigurations(), "No configuration found for plugin dependency-manager");
             for (String[] configurationArray : dpExtension.getConfigurations()) {
                 if (dpExtension.getStripVersion() != null)
-                    stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
+                    //At the moment we always stripversion
+                    //stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
 
                 for (String configuration : configurationArray) {
                     Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);
@@ -84,7 +85,8 @@ public class DependencyManager extends DefaultTask {
                     Files.createDirectories(baseLocation.getParent());
                     Files.copy(artifact.getFile().toPath(), baseLocation, StandardCopyOption.REPLACE_EXISTING);
                     ObjectMapper mapper = new ObjectMapper();
-                    baseDependencies = mapper.readValue(Files.readString(baseLocation), new TypeReference<List<DownloadedDependency>>() {
+                    String readBaseLocation = new String(Files.readAllBytes(baseLocation));
+                    baseDependencies = mapper.readValue(readBaseLocation, new TypeReference<List<DownloadedDependency>>() {
                     });
                     break;
                 }
