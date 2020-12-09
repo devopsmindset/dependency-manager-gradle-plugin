@@ -96,7 +96,7 @@ public class DependencyManager extends DefaultTask {
     }
 
     private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
-        getProject().getLogger().info("Dependency Manager - Downloading dependency:  {}", artifact.getModuleVersion().toString());
+        getProject().getLogger().info("=> Dependency Manager -> Downloading dependency:  {}", artifact.getModuleVersion().toString());
 
         DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, isExtensionToDecompress(artifact.getExtension()), configuration, downloadPath);
         // Search for the reason in dependency list as it is not informed in resolved artifact
@@ -104,9 +104,11 @@ public class DependencyManager extends DefaultTask {
 
         if (dependencyFromArtifact != null) {
             downloadedDependency.setReason(dependencyFromArtifact.getReason());
-            if (downloadedDependency.getReasons().containsKey("target")){
-                downloadedDependency.setLocation(Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, "target", downloadedDependency.getReasons().get("target"), downloadedDependency.getProcessedArtifactName()).toString());
-                if (downloadedDependency.getReasons().containsKey("decompress")){
+            if (downloadedDependency.getReasons().containsKey("target")) {
+                final String location = Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, "target", downloadedDependency.getReasons().get("target"), downloadedDependency.getProcessedArtifactName()).toString();
+                getProject().getLogger().debug("moving to custom location: {}", location);
+                downloadedDependency.setLocation(location);
+                if (downloadedDependency.getReasons().containsKey("decompress")) {
                     downloadedDependency.setLocation(Paths.get(downloadedDependency.getLocation()).getParent().toString());
                 }
             }
