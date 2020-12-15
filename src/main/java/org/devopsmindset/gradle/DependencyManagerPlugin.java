@@ -36,7 +36,7 @@ class DependencyManagerPlugin implements Plugin<Project> {
 
         PublishingExtension publishingExtension = (PublishingExtension) project.getConvention().getExtensionsAsDynamicObject().getProperty("publishing");
 
-        publishingExtension.getPublications().clear();
+        //publishingExtension.getPublications().clear();
         publishingExtension.getPublications().create("mavenJava", MavenPublication.class, publication -> {
             //publication.getPom().setPackaging("xml");
             addArchive(new File(project.getBuildDir(), DependencyManager.DEFAULT_DEPENDENCY_FILE), publication, "");
