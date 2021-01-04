@@ -28,7 +28,7 @@ buildscript {
         repositories {
             mavenLocal()
             dependencies {
-                classpath "org.devopsmindset.gradle:dependency-manager:0.0.6-SNAPSHOT"
+                classpath "org.devopsmindset.gradle:dependency-manager:0.0.7-SNAPSHOT"
             }
         }
     }
@@ -43,6 +43,7 @@ buildscript {
 
 configurations {
     cspDepenency
+    install4jDependencies
     base
 }
 
@@ -60,13 +61,18 @@ dependencies{
     cspDepenency group: 'roche', name: 'components-library-ui', version: '1.1.+', ext: 'tgz', because: "target=csp/components/unzipPackage;decompress=package"
     cspDepenency group: 'com.roche.sis.infinity', name: 'infinity-lis-gen-reports', version: '0.0.13', ext: 'zip', because: "decompress=.;target=csp/acb/LISPages"
     //base group:'org.devopsmindset.gradle', name: 'dependency-manager', version: '0.0.1', ext: 'dependencies'
+
+    install4jDependencies(group: 'com.ej-technologies', name: 'adoptopenjdk', version: "11.0.7_10", classifier: 'jre_x64_windows_hotspot', ext: 'tar.gz', because: "target=jre")
+    install4jDependencies group: 'com.roche.installer.install4j', name: 'install4j-java-library', version: '1.0.6'
+    install4jDependencies group: 'com.roche.infinity.installer.install4j', name: 'healthshare-actions', version: "1.0.0-ALPHA7"
 }
 
 apply plugin: 'org.devopsmindset.dependency-manager'
 
 dependenciesManagement {
-    configurations = [['cspDepenency']]
+    configurations = [['cspDepenency'], ['install4jDependencies']]
     stripVersion = [true, true]
+    separateByGroupId = [true, false]
 }
 
 publishToMavenLocal.dependsOn("dependenciesDownload")

@@ -33,6 +33,7 @@ public class DependencyManager extends DefaultTask {
     public void run() throws Exception {
         try {
             Boolean stripVersion = true;
+            Boolean separateByGroupId = true;
 
             DependencyManagerExtension dpExtension = (DependencyManagerExtension) getProject().getConvention().getByName("dependenciesManagement");
             List<DownloadedDependency> downloadedDependencies = new ArrayList<DownloadedDependency>();
@@ -48,8 +49,11 @@ public class DependencyManager extends DefaultTask {
             Preconditions.checkNotNull(dpExtension.getConfigurations(), "No configuration found for plugin dependency-manager");
             for (String[] configurationArray : dpExtension.getConfigurations()) {
                 if (dpExtension.getStripVersion() != null)
-                    //At the moment we always stripversion
-                    //stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
+                    stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
+
+                if (dpExtension.getSeparateByGroupId() != null)
+                    separateByGroupId = ((separateByGroupId = dpExtension.getSeparateByGroupId()[iteration]) != null) ? separateByGroupId : true;
+
 
                 for (String configuration : configurationArray) {
                     Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);
@@ -59,6 +63,7 @@ public class DependencyManager extends DefaultTask {
                         DownloadedDependency downloadedDependency = copyDependency(artifact,
                                 Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, configuration),
                                 stripVersion,
+                                separateByGroupId,
                                 configuration,
                                 baseDependencies);
                         downloadedDependencies.add(downloadedDependency);
@@ -95,10 +100,10 @@ public class DependencyManager extends DefaultTask {
         return baseDependencies;
     }
 
-    private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
+    private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, boolean separateByGroupId, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
         getProject().getLogger().info("Dependency Manager - Downloading dependency:  {}", artifact.getModuleVersion().toString());
 
-        DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, isExtensionToDecompress(artifact.getExtension()), configuration, downloadPath);
+        DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, separateByGroupId, configuration, downloadPath);
         // Search for the reason in dependency list as it is not informed in resolved artifact
         final Dependency dependencyFromArtifact = getDependencyFromArtifact(artifact, getProject().getConfigurations().getByName(configuration).getIncoming().getDependencies());
 
