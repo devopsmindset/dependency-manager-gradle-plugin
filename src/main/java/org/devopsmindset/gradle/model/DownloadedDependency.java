@@ -17,7 +17,7 @@ public class DownloadedDependency {
     private String artifact;
     private String version;
     private String extension;
-    private String classifer;
+    private String classifier;
     private String location;
     private String configuration;
     private String reason;
@@ -25,12 +25,9 @@ public class DownloadedDependency {
     private Boolean differentFromBase = false;
     private String processedArtifactName;
 
-    public DownloadedDependency() {
-    }
-
     public DownloadedDependency(ResolvedArtifact artifact) {
         setArtifact(artifact.getModuleVersion().getId().getName());
-        setClassifer(artifact.getClassifier());
+        setClassifier(artifact.getClassifier());
         setExtension(artifact.getExtension().toLowerCase());
         setGroup(artifact.getModuleVersion().getId().getGroup());
         setVersion(artifact.getModuleVersion().getId().getVersion());
@@ -70,7 +67,7 @@ public class DownloadedDependency {
                 .thenComparing(DownloadedDependency::getArtifact)
                 .thenComparing(DownloadedDependency::getVersion)
                 .thenComparing(DownloadedDependency::getExtension)
-                .thenComparing(DownloadedDependency::getClassifer, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(DownloadedDependency::getClassifier, Comparator.nullsLast(Comparator.reverseOrder()))
                 .compare(this, downloadedDependency);
     }
 

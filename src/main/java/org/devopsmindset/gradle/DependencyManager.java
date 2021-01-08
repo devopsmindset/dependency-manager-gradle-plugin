@@ -90,19 +90,24 @@ public class DependencyManager extends DefaultTask {
 
     private List<DownloadedDependency> getBaseDependencies() throws IOException {
         List<DownloadedDependency> baseDependencies = null;
-        Configuration baseConfiguration = getProject().getConfigurations().getByName(BASE_CONFIGURATION);
-        ResolvedConfiguration resolvedBaseConfiguration = baseConfiguration.getResolvedConfiguration();
-        for (ResolvedArtifact artifact : resolvedBaseConfiguration.getResolvedArtifacts()) {
-            if (artifact.getExtension().equals(DEPENDENCIES)) {
-                Path baseLocation = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_BASE_FILE);
-                Files.createDirectories(baseLocation.getParent());
-                Files.copy(artifact.getFile().toPath(), baseLocation, StandardCopyOption.REPLACE_EXISTING);
-                ObjectMapper mapper = new ObjectMapper();
-                String readBaseLocation = new String(Files.readAllBytes(baseLocation));
-                baseDependencies = mapper.readValue(readBaseLocation, new TypeReference<List<DownloadedDependency>>() {
-                });
-                break;
+        try {
+            Configuration baseConfiguration;
+            baseConfiguration = getProject().getConfigurations().getByName(BASE_CONFIGURATION);
+            ResolvedConfiguration resolvedBaseConfiguration = baseConfiguration.getResolvedConfiguration();
+            for (ResolvedArtifact artifact : resolvedBaseConfiguration.getResolvedArtifacts()) {
+                if (artifact.getExtension().equals(DEPENDENCIES)) {
+                    Path baseLocation = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_BASE_FILE);
+                    Files.createDirectories(baseLocation.getParent());
+                    Files.copy(artifact.getFile().toPath(), baseLocation, StandardCopyOption.REPLACE_EXISTING);
+                    ObjectMapper mapper = new ObjectMapper();
+                    String readBaseLocation = new String(Files.readAllBytes(baseLocation));
+                    baseDependencies = mapper.readValue(readBaseLocation, new TypeReference<List<DownloadedDependency>>() {
+                    });
+                    break;
+                }
             }
+        } catch (UnknownConfigurationException e) {
+            getProject().getLogger().debug("Base configuration not found");
         }
         return baseDependencies;
     }
@@ -125,7 +130,7 @@ public class DependencyManager extends DefaultTask {
         }
 
         // If already in base dependency it will not be added / processed
-        if (!downloadedDependency.findIn(baseDependencies)) {
+        if (baseDependencies == null || !downloadedDependency.findIn(baseDependencies)) {
             downloadedDependency.setDifferentFromBase(true);
             copyArtifact(artifact, Paths.get(downloadedDependency.getLocation()), downloadedDependency.getReasons());
         }

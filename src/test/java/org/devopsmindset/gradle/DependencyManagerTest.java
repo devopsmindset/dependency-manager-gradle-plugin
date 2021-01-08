@@ -2,11 +2,11 @@ package org.devopsmindset.gradle;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
-import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -25,6 +25,6 @@ class DependencyManagerTest {
                 .build();
 
         assertNotNull(result);
-        assertEquals(result.getTasks().get(0).getOutcome(), TaskOutcome.SUCCESS);
+        assertEquals(SUCCESS, result.getTasks().get(0).getOutcome());
     }
 }
