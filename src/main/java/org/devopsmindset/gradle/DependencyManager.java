@@ -25,9 +25,12 @@ import java.util.Map;
 public class DependencyManager extends DefaultTask {
 
     public static final String DEFAULT_DEPENDENCY_FILE = "processed.dependencies";
-    final String DEFAULT_LOCATION = "dependency-manager";
-    final String DEFAULT_DEPENDENCY_BASE_FILE = "base.dependencies";
-    final String BASE_CONFIGURATION = "base";
+    public static final String DEPENDENCIES = "dependencies";
+    public static final String DECOMPRESS = "decompress";
+    public static final String TARGET = "target";
+    static final String DEFAULT_LOCATION = "dependency-manager";
+    static final String DEFAULT_DEPENDENCY_BASE_FILE = "base.dependencies";
+    static final String BASE_CONFIGURATION = "base";
 
     @TaskAction
     public void run() throws Exception {
@@ -36,7 +39,9 @@ public class DependencyManager extends DefaultTask {
             Boolean separateByGroupId = true;
 
             DependencyManagerExtension dpExtension = (DependencyManagerExtension) getProject().getConvention().getByName("dependenciesManagement");
-            List<DownloadedDependency> downloadedDependencies = new ArrayList<DownloadedDependency>();
+            Preconditions.checkNotNull(dpExtension.getConfigurations(), "No configuration found for plugin dependency-manager");
+            Preconditions.checkArgument(checkInitialArguments(dpExtension), "Invalid number of arguments");
+            List<DownloadedDependency> downloadedDependencies = new ArrayList<>();
 
             // Delete output directory
             FileUtils.deleteDirectory(Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION).toFile());
@@ -46,7 +51,6 @@ public class DependencyManager extends DefaultTask {
             List<DownloadedDependency> baseDependencies = getBaseDependencies();
 
             int iteration = 0;
-            Preconditions.checkNotNull(dpExtension.getConfigurations(), "No configuration found for plugin dependency-manager");
             for (String[] configurationArray : dpExtension.getConfigurations()) {
                 if (dpExtension.getStripVersion() != null)
                     stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
@@ -79,13 +83,19 @@ public class DependencyManager extends DefaultTask {
         }
     }
 
+    private boolean checkInitialArguments(DependencyManagerExtension dpExtension) {
+        return dpExtension.getConfigurations().length == dpExtension.getStripVersion().length &&
+                dpExtension.getConfigurations().length == dpExtension.getSeparateByGroupId().length;
+    }
+
     private List<DownloadedDependency> getBaseDependencies() throws IOException {
         List<DownloadedDependency> baseDependencies = null;
-        Configuration baseConfiguration = getProject().getConfigurations().getByName(BASE_CONFIGURATION);
-        if (baseConfiguration != null) {
+        try {
+            Configuration baseConfiguration;
+            baseConfiguration = getProject().getConfigurations().getByName(BASE_CONFIGURATION);
             ResolvedConfiguration resolvedBaseConfiguration = baseConfiguration.getResolvedConfiguration();
             for (ResolvedArtifact artifact : resolvedBaseConfiguration.getResolvedArtifacts()) {
-                if (artifact.getExtension().equals("dependencies")) {
+                if (artifact.getExtension().equals(DEPENDENCIES)) {
                     Path baseLocation = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_BASE_FILE);
                     Files.createDirectories(baseLocation.getParent());
                     Files.copy(artifact.getFile().toPath(), baseLocation, StandardCopyOption.REPLACE_EXISTING);
@@ -96,6 +106,8 @@ public class DependencyManager extends DefaultTask {
                     break;
                 }
             }
+        } catch (UnknownConfigurationException e) {
+            getProject().getLogger().debug("Base configuration not found");
         }
         return baseDependencies;
     }
@@ -109,16 +121,16 @@ public class DependencyManager extends DefaultTask {
 
         if (dependencyFromArtifact != null) {
             downloadedDependency.setReason(dependencyFromArtifact.getReason());
-            if (downloadedDependency.getReasons().containsKey("target")){
-                downloadedDependency.setLocation(Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, "target", downloadedDependency.getReasons().get("target"), downloadedDependency.getProcessedArtifactName()).toString());
-                if (downloadedDependency.getReasons().containsKey("decompress")){
+            if (downloadedDependency.getReasons().containsKey(TARGET)) {
+                downloadedDependency.setLocation(Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, TARGET, downloadedDependency.getReasons().get(TARGET), downloadedDependency.getProcessedArtifactName()).toString());
+                if (downloadedDependency.getReasons().containsKey(DECOMPRESS)) {
                     downloadedDependency.setLocation(Paths.get(downloadedDependency.getLocation()).getParent().toString());
                 }
             }
         }
 
         // If already in base dependency it will not be added / processed
-        if (!downloadedDependency.findIn(baseDependencies)) {
+        if (baseDependencies == null || !downloadedDependency.findIn(baseDependencies)) {
             downloadedDependency.setDifferentFromBase(true);
             copyArtifact(artifact, Paths.get(downloadedDependency.getLocation()), downloadedDependency.getReasons());
         }
@@ -127,14 +139,14 @@ public class DependencyManager extends DefaultTask {
     }
 
     private void copyArtifact(ResolvedArtifact artifact, Path dest, Map<String, String> reasons) throws Exception {
-        if (isExtensionToDecompress(artifact.getExtension()) && reasons.containsKey("decompress")) {
+        if (isExtensionToDecompress(artifact.getExtension()) && reasons.containsKey(DECOMPRESS)) {
             Files.createDirectories(dest);
-            if (!reasons.get("decompress").equals(".")){
+            if (!reasons.get(DECOMPRESS).equals(".")) {
                 Path tempDirWithPrefix = Files.createTempDirectory("depmanager");
                 try {
                     CompressionUtils.extract(artifact.getFile(), tempDirWithPrefix.toFile());
 
-                    File origin = new File(Paths.get(tempDirWithPrefix.toString(), reasons.get("decompress")).toString());
+                    File origin = new File(Paths.get(tempDirWithPrefix.toString(), reasons.get(DECOMPRESS)).toString());
                     Path destination = dest;
                     if (origin.isFile()) {
                         destination = Paths.get(dest.toString(), origin.getName());
@@ -142,10 +154,10 @@ public class DependencyManager extends DefaultTask {
                     } else {
                         FileUtils.copyDirectory(origin, destination.toFile());
                     }
-                }finally{
+                } finally {
                     FileUtils.deleteQuietly(tempDirWithPrefix.toFile());
                 }
-            }else{
+            } else {
                 CompressionUtils.extract(artifact.getFile(), dest.toFile());
             }
         } else {
@@ -153,7 +165,6 @@ public class DependencyManager extends DefaultTask {
             Files.copy(artifact.getFile().toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
         }
     }
-
 
     private Dependency getDependencyFromArtifact(ResolvedArtifact artifact, DependencySet dependencies) {
         Dependency foundDependency = null;
@@ -187,6 +198,5 @@ public class DependencyManager extends DefaultTask {
                 || extension.equalsIgnoreCase("tgz")
                 || extension.equalsIgnoreCase("tar.gz"));
     }
-
 
 }

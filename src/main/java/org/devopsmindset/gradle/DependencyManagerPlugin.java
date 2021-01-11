@@ -14,6 +14,7 @@ import java.io.File;
 
 class DependencyManagerPlugin implements Plugin<Project> {
 
+    public static final String DEPENDENCIES_DOWNLOAD = "dependenciesDownload";
     private final ArtifactHandler artifactHandler;
 
     @Inject
@@ -23,32 +24,21 @@ class DependencyManagerPlugin implements Plugin<Project> {
 
     public void apply(Project project) {
         project.getPluginManager().apply(MavenPublishPlugin.class);
-
         project.getConvention().add("dependenciesManagement", DependencyManagerExtension.class);
-        project.getTasks().register("dependenciesDownload", DependencyManager.class,  w -> {
-                    w.setGroup("dependency manager");
-                }
-        );
-        project.getTasks().getByName("publishToMavenLocal").dependsOn("dependenciesDownload");
-        project.getTasks().getByName("publish").dependsOn("dependenciesDownload");
+        project.getTasks().register(DEPENDENCIES_DOWNLOAD, DependencyManager.class, w -> w.setGroup("dependency manager"));
+        project.getTasks().getByName("publishToMavenLocal").dependsOn(DEPENDENCIES_DOWNLOAD);
+        project.getTasks().getByName("publish").dependsOn(DEPENDENCIES_DOWNLOAD);
 
         project.getConfigurations().create("dependencyManager");
 
         PublishingExtension publishingExtension = (PublishingExtension) project.getConvention().getExtensionsAsDynamicObject().getProperty("publishing");
 
-        //publishingExtension.getPublications().clear();
-        publishingExtension.getPublications().create("mavenJava", MavenPublication.class, publication -> {
-            //publication.getPom().setPackaging("xml");
-            addArchive(new File(project.getBuildDir(), DependencyManager.DEFAULT_DEPENDENCY_FILE), publication, "");
-        });
-
+        publishingExtension.getPublications().create("mavenJava", MavenPublication.class, publication -> addArchive(new File(project.getBuildDir(), DependencyManager.DEFAULT_DEPENDENCY_FILE), publication, ""));
 
     }
 
     void addArchive(File newFile, MavenPublication publication, String classifier) {
-
-        PublishArtifact artifact = artifactHandler.add("dependencyManager", newFile,
-                w -> w.setClassifier(classifier));
+        PublishArtifact artifact = artifactHandler.add("dependencyManager", newFile, w -> w.setClassifier(classifier));
         publication.artifact(artifact);
 
     }
