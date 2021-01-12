@@ -1,6 +1,5 @@
 package org.devopsmindset.gradle;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -17,10 +16,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class DependencyManager extends DefaultTask {
 
@@ -58,7 +59,8 @@ public class DependencyManager extends DefaultTask {
                 if (dpExtension.getSeparateByGroupId() != null)
                     separateByGroupId = ((separateByGroupId = dpExtension.getSeparateByGroupId()[iteration]) != null) ? separateByGroupId : true;
 
-
+                getProject().getLogger().debug("stripVersion: {}", stripVersion);
+                getProject().getLogger().debug("separateByGroupId: {}", separateByGroupId);
                 for (String configuration : configurationArray) {
                     Configuration gradleConfiguration = getProject().getConfigurations().getByName(configuration);
                     ResolvedConfiguration resolvedConfiguration = gradleConfiguration.getResolvedConfiguration();
@@ -78,7 +80,7 @@ public class DependencyManager extends DefaultTask {
             }
             generateResolvedDependenciesFile(downloadedDependencies);
         } catch (Exception e) {
-            getProject().getLogger().error("Error downloading dependencies " + e.toString());
+            getProject().getLogger().error("Error downloading dependencies: " + e.toString());
             throw e;
         }
     }
@@ -98,7 +100,7 @@ public class DependencyManager extends DefaultTask {
                 if (artifact.getExtension().equals(DEPENDENCIES)) {
                     Path baseLocation = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_BASE_FILE);
                     Files.createDirectories(baseLocation.getParent());
-                    Files.copy(artifact.getFile().toPath(), baseLocation, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(artifact.getFile().toPath(), baseLocation, REPLACE_EXISTING);
                     ObjectMapper mapper = new ObjectMapper();
                     String readBaseLocation = new String(Files.readAllBytes(baseLocation));
                     baseDependencies = mapper.readValue(readBaseLocation, new TypeReference<List<DownloadedDependency>>() {
@@ -112,7 +114,12 @@ public class DependencyManager extends DefaultTask {
         return baseDependencies;
     }
 
-    private DownloadedDependency copyDependency(ResolvedArtifact artifact, Path downloadPath, boolean stripVersion, boolean separateByGroupId, String configuration, List<DownloadedDependency> baseDependencies) throws Exception {
+    private DownloadedDependency copyDependency(ResolvedArtifact artifact,
+                                                Path downloadPath,
+                                                boolean stripVersion,
+                                                boolean separateByGroupId,
+                                                String configuration,
+                                                List<DownloadedDependency> baseDependencies) throws Exception {
         getProject().getLogger().info("Dependency Manager - Downloading dependency:  {}", artifact.getModuleVersion().toString());
 
         DownloadedDependency downloadedDependency = new DownloadedDependency(artifact, stripVersion, separateByGroupId, configuration, downloadPath);
@@ -150,7 +157,7 @@ public class DependencyManager extends DefaultTask {
                     Path destination = dest;
                     if (origin.isFile()) {
                         destination = Paths.get(dest.toString(), origin.getName());
-                        Files.copy(origin.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+                        Files.copy(origin.toPath(), destination, REPLACE_EXISTING);
                     } else {
                         FileUtils.copyDirectory(origin, destination.toFile());
                     }
@@ -162,7 +169,7 @@ public class DependencyManager extends DefaultTask {
             }
         } else {
             Files.createDirectories(dest.getParent());
-            Files.copy(artifact.getFile().toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(artifact.getFile().toPath(), dest, REPLACE_EXISTING);
         }
     }
 
@@ -179,7 +186,7 @@ public class DependencyManager extends DefaultTask {
 
     private void generateResolvedDependenciesFile(List<DownloadedDependency> downloadedDependencies) {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(NON_NULL);
         mapper.writerWithDefaultPrettyPrinter();
         mapper.findAndRegisterModules();
         File downloadedDependenciesFile = Paths.get(getProject().getBuildDir().toString(), DEFAULT_DEPENDENCY_FILE).toFile();
@@ -187,6 +194,7 @@ public class DependencyManager extends DefaultTask {
             if (Files.exists(downloadedDependenciesFile.toPath())) {
                 Files.delete(downloadedDependenciesFile.toPath());
             }
+            //TODO refine downloaded dependencies to contain only original ones
             mapper.writerWithDefaultPrettyPrinter().writeValue(downloadedDependenciesFile, downloadedDependencies);
         } catch (IOException e) {
             getProject().getLogger().error(e.getMessage(), e);
