@@ -2,7 +2,6 @@ plugins {
     id 'java-gradle-plugin'
     id "com.gradle.plugin-publish" version "0.12.0"
     id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '5.1.0'
     id "com.jfrog.artifactory" version "4.15.2"
 }
 
@@ -13,13 +12,10 @@ repositories {
 }
 
 dependencies {
-
-    shadow localGroovy()
-    shadow gradleApi()
-    shadow group: 'org.apache.commons', name: 'commons-compress', version: '1.20'
-    shadow group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.5.0'
-    shadow group: 'commons-io', name: 'commons-io', version: '2.8.0'
-    shadow group: 'net.lingala.zip4j', name: 'zip4j', version: '2.6.4'
+    compileOnly group: 'org.apache.commons', name: 'commons-compress', version: '1.20'
+    compileOnly group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.5.0'
+    compileOnly group: 'commons-io', name: 'commons-io', version: '2.8.0'
+    compileOnly group: 'net.lingala.zip4j', name: 'zip4j', version: '2.6.4'
     testImplementation 'org.junit.platform:junit-platform-commons:1.5.2'
     testCompile 'org.junit.jupiter:junit-jupiter:5.6.0'
     compileOnly 'org.projectlombok:lombok:1.18.4'
@@ -39,7 +35,6 @@ gradlePlugin {
     }
 }
 
-publishPlugins.dependsOn 'shadowJar'
 
 test {
     useJUnitPlatform()
@@ -53,39 +48,6 @@ pluginBundle {
     website = 'https://wwww.devopsmindset.org'
     vcsUrl = 'https://github.com/devopsmindset/dependency-manager-gradle-plugin.git'
     tags = ['dependency', 'dependencies']
-    plugins {
-        dependencyManager {
-            displayName = 'Dependency manager plugin'
-        }
-    }
 }
 
 
-// Overrides the jar publish phase - needed if jar.enabled is false
-tasks.matching { it.name == "publishPluginMavenPublicationToMavenRepository" }.all {
-    onlyIf { false }
-}
-
-tasks.jar.configure {
-    classifier = 'default'
-}
-
-shadowJar {
-    classifier = null
-    zip64 true
-}
-
-publishPlugins.dependsOn 'shadowJar'
-
-publishing {
-    publications {
-        shadow(MavenPublication) { publication ->
-            from project.shadow.component(publication)
-            artifactId = 'dependency-manager'
-        }
-    }
-}
-
-artifactoryPublish {
-    publications('shadow')
-}
