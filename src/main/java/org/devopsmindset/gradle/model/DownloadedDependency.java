@@ -11,6 +11,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Downloaded Dependency
+ */
 @Data
 public class DownloadedDependency {
     private String group;
@@ -25,6 +28,10 @@ public class DownloadedDependency {
     private Boolean differentFromBase = false;
     private String processedArtifactName;
 
+    /**
+     * Public constructor
+     * @param artifact resolved artifact
+     */
     public DownloadedDependency(ResolvedArtifact artifact) {
         setArtifact(artifact.getModuleVersion().getId().getName());
         setClassifier(artifact.getClassifier());
@@ -35,6 +42,14 @@ public class DownloadedDependency {
         reasons = Collections.emptyMap();
     }
 
+    /**
+     * Public constructor
+     * @param artifact resolved artifact
+     * @param stripVersion strip version
+     * @param separateByGroupId separate by group id
+     * @param configuration configuration
+     * @param downloadPath download path
+     */
     public DownloadedDependency(ResolvedArtifact artifact, boolean stripVersion, boolean separateByGroupId, String configuration, Path downloadPath) {
         this(artifact);
         processedArtifactName =  artifact.getFile().getName();
@@ -51,6 +66,11 @@ public class DownloadedDependency {
         }
     }
 
+    /**
+     * Find a dependency within a list of dependencies
+     * @param baseDependencies base dependencies
+     * @return true if found.
+     */
     public boolean findIn(List<DownloadedDependency> baseDependencies) {
         if (baseDependencies != null) {
             for (DownloadedDependency baseDependency : baseDependencies) {
@@ -62,6 +82,11 @@ public class DownloadedDependency {
         return false;
     }
 
+    /**
+     * Compare a downloaded dependency by its group, artifact, version, extension and the classifier
+     * @param downloadedDependency the downloaded dependency
+     * @return 0 if it's equal
+     */
     public int compareTo(DownloadedDependency downloadedDependency){
         return Comparator.comparing(DownloadedDependency::getGroup)
                 .thenComparing(DownloadedDependency::getArtifact)
@@ -71,6 +96,10 @@ public class DownloadedDependency {
                 .compare(this, downloadedDependency);
     }
 
+    /**
+     * Sets the reason and parses it with semicolon for attribute's capture.
+     * @param reason a series of attributes for the plugin to process. i.e. decompress and target.
+     */
     public void setReason(String reason){
         this.reason = reason;
         try {

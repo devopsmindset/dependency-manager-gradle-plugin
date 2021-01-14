@@ -23,16 +23,35 @@ import java.util.Map;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+/**
+ * Dependency manager class
+ */
 public class DependencyManager extends DefaultTask {
 
+    /**
+     * Processed dependencies file
+     */
     public static final String DEFAULT_DEPENDENCY_FILE = "processed.dependencies";
+    /**
+     * Dependencies
+     */
     public static final String DEPENDENCIES = "dependencies";
+    /**
+     * Decompress attribute
+     */
     public static final String DECOMPRESS = "decompress";
+    /**
+     * Target attribute
+     */
     public static final String TARGET = "target";
     static final String DEFAULT_LOCATION = "dependency-manager";
     static final String DEFAULT_DEPENDENCY_BASE_FILE = "base.dependencies";
     static final String BASE_CONFIGURATION = "base";
 
+    /**
+     * Run method
+     * @throws Exception throws exception
+     */
     @TaskAction
     public void run() throws Exception {
         try {
@@ -54,10 +73,10 @@ public class DependencyManager extends DefaultTask {
             int iteration = 0;
             for (String[] configurationArray : dpExtension.getConfigurations()) {
                 if (dpExtension.getStripVersion() != null)
-                    stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : true;
+                    stripVersion = ((stripVersion = dpExtension.getStripVersion()[iteration]) != null) ? stripVersion : Boolean.TRUE;
 
                 if (dpExtension.getSeparateByGroupId() != null)
-                    separateByGroupId = ((separateByGroupId = dpExtension.getSeparateByGroupId()[iteration]) != null) ? separateByGroupId : true;
+                    separateByGroupId = ((separateByGroupId = dpExtension.getSeparateByGroupId()[iteration]) != null) ? separateByGroupId : Boolean.TRUE;
 
                 getProject().getLogger().debug("stripVersion: {}", stripVersion);
                 getProject().getLogger().debug("separateByGroupId: {}", separateByGroupId);
