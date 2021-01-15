@@ -5,9 +5,9 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ main ]
+    branches: [ firstfeature ]
   pull_request:
-    branches: [ main ]
+    branches: [ firstfeature ]
 
 jobs:
   build:
@@ -27,5 +27,5 @@ jobs:
     - name: publish plugin
       run: ./gradlew publishPlugins
       env:
-        gradle.publish.key: ${{GRADLE_KEY}}
-        gradle.publish.secret: ${{GRADLE_SECRET}}
+        gradle.publish.key: ${{secret.GRADLE_KEY}}
+        gradle.publish.secret: ${{secret.GRADLE_SECRET}}
