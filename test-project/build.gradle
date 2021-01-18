@@ -26,7 +26,7 @@ buildscript {
         repositories {
             mavenLocal()
             dependencies {
-                classpath "org.devopsmindset.gradle:dependency-manager:0.0.9-SNAPSHOT"
+                classpath "org.devopsmindset.gradle:dependency-manager:0.1.2"
             }
         }
     }
@@ -68,7 +68,7 @@ dependencies{
 apply plugin: 'org.devopsmindset.dependency-manager'
 
 dependenciesManagement {
-    configurations = [['cspDepenency'], ['install4jDependencies']]
+    configurations = [['cspDependency'], ['install4jDependencies']]
     stripVersion = [true, true]
     separateByGroupId = [true, false]
 }

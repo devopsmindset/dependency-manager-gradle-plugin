@@ -3,6 +3,7 @@ package org.devopsmindset.gradle;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import lombok.val;
 import org.apache.commons.io.FileUtils;
 import org.devopsmindset.gradle.compress.CompressionUtils;
 import org.devopsmindset.gradle.model.DependencyManagerExtension;
@@ -16,9 +17,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -50,6 +50,7 @@ public class DependencyManager extends DefaultTask {
 
     /**
      * Run method
+     *
      * @throws Exception throws exception
      */
     @TaskAction
@@ -97,11 +98,24 @@ public class DependencyManager extends DefaultTask {
 
                 iteration++;
             }
-            generateResolvedDependenciesFile(downloadedDependencies);
+
+            List<DownloadedDependency> fileDependencies = filterFinalDependencies(downloadedDependencies);
+            generateResolvedDependenciesFile(fileDependencies);
         } catch (Exception e) {
             getProject().getLogger().error("Error downloading dependencies: " + e.toString());
             throw e;
         }
+    }
+
+    public List<DownloadedDependency> filterFinalDependencies(List<DownloadedDependency> initialDependencies) {
+        val dependencyList = getProject().getConfigurations().stream().flatMap(files -> files.getIncoming().getDependencies().stream())
+                .map(dependency -> dependency.getGroup() + "." + dependency.getName())
+                .collect(Collectors.toList());
+
+        return initialDependencies.stream()
+                .filter(dd -> dependencyList.contains(dd.getGroup() + "." + dd.getArtifact())).collect(Collectors.toList());
+
+
     }
 
     private boolean checkInitialArguments(DependencyManagerExtension dpExtension) {
