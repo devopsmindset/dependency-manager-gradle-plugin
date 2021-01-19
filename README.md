@@ -1,6 +1,8 @@
 # Dependency Manager gradle plugin
 ## Gradle plugin to manage and download dependencies.
 
+Published at [Gradle Plugins portal](https://plugins.gradle.org/plugin/org.devopsmindset.dependency-manager)
+
 ### Usage
 
 1. Configure the dependencies types on the configuration block
