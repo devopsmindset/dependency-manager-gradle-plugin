@@ -27,5 +27,5 @@ jobs:
     - name: publish plugin
       run: ./gradlew publishPlugins
       env:
-        gradle.publish.key: ${{secret.GRADLE_KEY}}
-        gradle.publish.secret: ${{secret.GRADLE_SECRET}}
+        gradle.publish.key: ${{ secrets.GRADLE_KEY }}
+        gradle.publish.secret: ${{ secrets.GRADLE_SECRET }}
