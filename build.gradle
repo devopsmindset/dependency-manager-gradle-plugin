@@ -38,6 +38,7 @@ gradlePlugin {
 }
 
 release{
+    pushReleaseVersionBranch = false
     git {
         requireBranch = 'feature/firstfeature'
     }
