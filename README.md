@@ -1,6 +1,8 @@
 # Dependency Manager gradle plugin
 ## Gradle plugin to manage and download dependencies.
 
+![Java CI with Gradle](https://github.com/devopsmindset/dependency-manager-gradle-plugin/workflows/Java%20CI%20with%20Gradle/badge.svg?branch=feature%2Ffirstfeature)
+
 Published at [Gradle Plugins portal](https://plugins.gradle.org/plugin/org.devopsmindset.dependency-manager)
 
 ### Usage
