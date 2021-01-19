@@ -3,6 +3,7 @@ plugins {
     id "com.gradle.plugin-publish" version "0.12.0"
     id 'maven-publish'
     id "com.jfrog.artifactory" version "4.15.2"
+    id 'net.researchgate.release' version '2.8.1'
 }
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -33,6 +34,12 @@ gradlePlugin {
             displayName = 'Dependency Manager'
             description = 'Downloads a set of dependencies depending of a given configuration'
         }
+    }
+}
+
+release{
+    git {
+        requireBranch = 'feature/firstfeature'
     }
 }
 
