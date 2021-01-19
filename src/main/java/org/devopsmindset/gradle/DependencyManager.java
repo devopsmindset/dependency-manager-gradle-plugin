@@ -229,7 +229,6 @@ public class DependencyManager extends DefaultTask {
             if (Files.exists(downloadedDependenciesFile.toPath())) {
                 Files.delete(downloadedDependenciesFile.toPath());
             }
-            //TODO refine downloaded dependencies to contain only original ones
             mapper.writerWithDefaultPrettyPrinter().writeValue(downloadedDependenciesFile, downloadedDependencies);
         } catch (IOException e) {
             getProject().getLogger().error(e.getMessage(), e);
