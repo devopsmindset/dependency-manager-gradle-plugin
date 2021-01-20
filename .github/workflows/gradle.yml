@@ -30,6 +30,6 @@ jobs:
         token: '${{ secrets.GITHUB_TOKEN }}'
     - run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
     - name: save environment variables
-      run: echo -e "gradle.publish.key=${{ secrets.GRADLE_KEY }}\ngradle.publish.secret=${{ secrets.GRADLE_SECRET }}" > gradle.properties
+      run: echo -e "gradle.publish.key=${{ secrets.GRADLE_KEY }}\ngradle.publish.secret=${{ secrets.GRADLE_SECRET }}" >> gradle.properties
     - name: publish plugin
       run: ./gradlew publishPlugins
