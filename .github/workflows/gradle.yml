@@ -25,6 +25,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build -x test
     - name: Configure git credentials & release version
+      uses: OleksiyRudenko/gha-git-credentials@v2
       with:
         token: '${{ secrets.GITHUB_TOKEN }}'
     - run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
