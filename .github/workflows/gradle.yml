@@ -28,6 +28,7 @@ jobs:
       with:
         token: '${{ secrets.GITHUB_TOKEN }}'
     - run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
+    - name: print environment variables
+      run: echo $gradle.publish.key and $gradle.publish.key
     - name: publish plugin
-    - run: echo $gradle.publish.key and $gradle.publish.key
-    - run: ./gradlew publishPlugins
+      run: ./gradlew publishPlugins
