@@ -24,8 +24,11 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build -x test
-    - name: release version
-      run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
+    - name: Configure git credentials & release version
+      uses: OleksiyRudenko/gha-git-credentials@v2
+      with:
+        key: '${{ secrets.GITHUB_TOKEN }}'
+    - run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
     - name: publish plugin
       run: ./gradlew publishPlugins
       env:
