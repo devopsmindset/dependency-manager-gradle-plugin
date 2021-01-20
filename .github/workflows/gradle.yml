@@ -11,6 +11,9 @@ on:
 
 jobs:
   build:
+    env:
+        gradle.publish.key: ${{ secrets.GRADLE_KEY }}
+        gradle.publish.secret: ${{ secrets.GRADLE_SECRET }}
 
     runs-on: ubuntu-latest
 
@@ -30,9 +33,5 @@ jobs:
         token: '${{ secrets.GITHUB_TOKEN }}'
     - run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
     - name: publish plugin
-      run: |
-          echo $gradle.publish.key and $gradle.publish.key
-          ./gradlew publishPlugins
-      env:
-        gradle.publish.key: ${{ secrets.GRADLE_KEY }}
-        gradle.publish.secret: ${{ secrets.GRADLE_SECRET }}
+    - run: echo $gradle.publish.key and $gradle.publish.key
+    - run: ./gradlew publishPlugins
