@@ -1,10 +1,12 @@
 plugins {
+    id 'java'
     id 'java-gradle-plugin'
     id "com.gradle.plugin-publish" version "0.12.0"
     id 'maven-publish'
     id "com.jfrog.artifactory" version "4.15.2"
     id 'net.researchgate.release' version '2.8.1'
 }
+
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 apply plugin: 'maven-publish'
@@ -25,7 +27,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.4'
 }
 
-
 gradlePlugin {
     plugins {
         dependencyManager {
@@ -37,7 +38,7 @@ gradlePlugin {
     }
 }
 
-release{
+release {
     failOnCommitNeeded = false
     pushReleaseVersionBranch = false
     git {
@@ -45,12 +46,24 @@ release{
     }
 }
 
-
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags "internal"
+    }
     testLogging {
-        outputs.upToDateWhen {false}
+        outputs.upToDateWhen { false }
         showStandardStreams = true
+    }
+    systemProperties = [
+            'junit.jupiter.execution.parallel.enabled'     : 'true',
+            'junit.jupiter.execution.parallel.mode.default': 'concurrent'
+    ]
+}
+
+def internalTest = tasks.register("InternalTest", Test) {
+    group "verification"
+    useJUnitPlatform {
+        includeTags "internal"
     }
 }
 
@@ -58,6 +71,10 @@ pluginBundle {
     website = 'https://wwww.devopsmindset.org'
     vcsUrl = 'https://github.com/devopsmindset/dependency-manager-gradle-plugin.git'
     tags = ['dependency', 'dependencies']
+}
+
+tasks.named("check"){
+    dependsOn internalTest
 }
 
 
