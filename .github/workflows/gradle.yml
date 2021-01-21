@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Run tests and generate a new version
 
 on:
   push:
@@ -21,12 +21,12 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew build -x test
+      run: ./gradlew build -x testClasses
     - name: Configure git credentials & release version
       uses: OleksiyRudenko/gha-git-credentials@v2
       with:
         token: '${{ secrets.GITHUB_TOKEN }}'
-    - run: ./gradlew release -Prelease.useAutomaticVersion=true -x test 
+    - run: ./gradlew release -Prelease.useAutomaticVersion=true -x testClasses 
     - name: save environment variables
       run: echo -e "\ngradle.publish.key=${{ secrets.GRADLE_KEY }}\ngradle.publish.secret=${{ secrets.GRADLE_SECRET }}" >> gradle.properties
     - name: publish plugin
