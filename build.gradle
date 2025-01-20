@@ -1,3 +1,10 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://jfrog.bintray.com/jfrog-jars/" }
+    }
+}
+
 plugins {
     id 'java'
     id 'java-gradle-plugin'
