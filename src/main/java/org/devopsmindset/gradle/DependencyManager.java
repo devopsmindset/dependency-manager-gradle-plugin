@@ -44,6 +44,7 @@ public class DependencyManager extends DefaultTask {
      * Target attribute
      */
     public static final String TARGET = "target";
+    public static final String FILENAME = "fileName";
     static final String DEFAULT_LOCATION = "dependency-manager";
     static final String DEFAULT_DEPENDENCY_BASE_FILE = "base.dependencies";
     static final String BASE_CONFIGURATION = "base";
@@ -162,7 +163,8 @@ public class DependencyManager extends DefaultTask {
         if (dependencyFromArtifact != null) {
             downloadedDependency.setReason(dependencyFromArtifact.getReason());
             if (downloadedDependency.getReasons().containsKey(TARGET)) {
-                final String location = Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, TARGET, downloadedDependency.getReasons().get(TARGET), downloadedDependency.getProcessedArtifactName()).toString();
+                final String fileName = downloadedDependency.getReasons().containsKey(FILENAME) ? downloadedDependency.getReasons().get(FILENAME)+"."+downloadedDependency.getExtension() : downloadedDependency.getProcessedArtifactName();
+                final String location = Paths.get(getProject().getBuildDir().toString(), DEFAULT_LOCATION, TARGET, downloadedDependency.getReasons().get(TARGET), fileName).toString();
                 getProject().getLogger().debug("moving to custom location: {}", location);
                 downloadedDependency.setLocation(location);
                 if (downloadedDependency.getReasons().containsKey(DECOMPRESS)) {
